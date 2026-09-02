@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import uuid
 from contextlib import asynccontextmanager
@@ -92,6 +93,17 @@ def _rendered(value: Any) -> str:
     return str(value or "")
 
 
+def strip_leading_title_heading(content: str) -> str:
+    """Remove a leading H1 / markdown title. The theme already renders post.title as H1."""
+    text = content.lstrip()
+    stripped = re.sub(r"^<h1\b[^>]*>.*?</h1>\s*", "", text, count=1, flags=re.IGNORECASE | re.DOTALL)
+    if stripped == text:
+        stripped = re.sub(r"^#\s+[^\n]+\n+", "", text, count=1)
+    if stripped != text:
+        logger.info("Removed leading H1/title from post content (theme already shows the title)")
+    return stripped
+
+
 class WordPressMCP:
     """Async client for WordPress REST API (/wp-json/wp/v2)."""
 
@@ -118,7 +130,7 @@ class WordPressMCP:
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "title": title,
-            "content": content,
+            "content": strip_leading_title_heading(content),
             "status": status or "publish",
         }
         if excerpt:
@@ -137,7 +149,7 @@ class WordPressMCP:
         if title is not None:
             payload["title"] = title
         if content is not None:
-            payload["content"] = content
+            payload["content"] = strip_leading_title_heading(content)
         if excerpt is not None:
             payload["excerpt"] = excerpt
         if not payload:
@@ -280,7 +292,13 @@ CREATE_POST_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
         "title": {"type": "string", "description": "Post title"},
-        "content": {"type": "string", "description": "Post content in HTML"},
+        "content": {
+            "type": "string",
+            "description": (
+                "Post body in HTML. Do NOT put the article title as <h1> or markdown # heading: "
+                "WordPress already renders the title. Start from the first paragraph or <h2>."
+            ),
+        },
         "excerpt": {"type": "string", "description": "Post excerpt", "default": ""},
         "status": {
             "type": "string",
@@ -297,7 +315,10 @@ UPDATE_POST_SCHEMA: dict[str, Any] = {
     "properties": {
         "post_id": {"type": "integer", "description": "ID of the post to update"},
         "title": {"type": "string", "description": "New title"},
-        "content": {"type": "string", "description": "New HTML content"},
+        "content": {
+            "type": "string",
+            "description": "New HTML body without a leading <h1> title (the theme already shows it)",
+        },
         "excerpt": {"type": "string", "description": "New excerpt"},
     },
     "required": ["post_id"],
