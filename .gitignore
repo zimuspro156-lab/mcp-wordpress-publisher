@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.log
+logs/
+.env
+.env.local
+.DS_Store
+npm-debug.log*
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Содержит реальный пароль приложения — не коммитить
+.cursor/

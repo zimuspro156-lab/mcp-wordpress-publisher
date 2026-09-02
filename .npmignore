@@ -1,0 +1,14 @@
+src/
+node_modules/
+logs/
+*.log
+.env
+.env.local
+.env.example.local
+tsconfig.json
+mcp.config.example.json
+.vscode/
+.cursor/
+.git/
+.gitignore
+*.tsbuildinfo

@@ -1,0 +1,16 @@
+[Unit]
+Description=MCP WordPress Publisher (HTTP transport for ChatGPT)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/mcp-wordpress-publisher
+EnvironmentFile=/opt/mcp-wordpress-publisher/.env
+ExecStart=/usr/bin/node /opt/mcp-wordpress-publisher/dist/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

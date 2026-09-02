@@ -1,0 +1,33 @@
+# Пример nginx для HTTPS-прокси к MCP-серверу.
+# Замените mcp.example.com на ваш поддомен, указывающий на IP VPS (94.183.190.28).
+#
+# Установка (на сервере, если nginx ещё не стоит):
+#   apt update && apt install -y nginx certbot python3-certbot-nginx
+#
+# Размещение конфига:
+#   cp deploy/nginx-mcp.conf /etc/nginx/sites-available/mcp-wordpress
+#   ln -sf /etc/nginx/sites-available/mcp-wordpress /etc/nginx/sites-enabled/
+#   nginx -t && systemctl reload nginx
+#
+# SSL (Let's Encrypt):
+#   certbot --nginx -d mcp.example.com
+
+server {
+    listen 80;
+    server_name mcp.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Streamable HTTP / SSE для MCP
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        chunked_transfer_encoding off;
+    }
+}

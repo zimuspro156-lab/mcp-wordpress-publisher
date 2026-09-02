@@ -1,0 +1,42 @@
+{
+  "$comment": "Примеры конфигурации MCP-клиента (Cursor / Claude Desktop). Скопируйте нужный блок из mcpServers в свой файл конфигурации клиента и подставьте реальные значения.",
+
+  "mcpServers": {
+    "wordpress-local-dev": {
+      "$comment": "ЛОКАЛЬНЫЙ ЗАПУСК БЕЗ КОМПИЛЯЦИИ: tsx выполняет TypeScript напрямую. Замените путь на абсолютный путь к вашему src/index.ts.",
+      "command": "npx",
+      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\MCP WP\\src\\index.ts"],
+      "env": {
+        "WORDPRESS_URL": "https://blog.sellerix.ru",
+        "WORDPRESS_USERNAME": "cursor",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
+        "LOG_LEVEL": "debug",
+        "LOG_FILE": "C:\\Users\\USER\\Desktop\\MCP WP\\logs\\mcp-wordpress.log"
+      }
+    },
+
+    "wordpress-npx": {
+      "$comment": "ЗАПУСК ИЗ NPM ПОСЛЕ ПУБЛИКАЦИИ: npx скачивает и запускает опубликованный пакет.",
+      "command": "npx",
+      "args": ["-y", "mcp-wordpress-publisher"],
+      "env": {
+        "WORDPRESS_URL": "https://blog.sellerix.ru",
+        "WORDPRESS_USERNAME": "cursor",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
+        "LOG_LEVEL": "info"
+      }
+    },
+
+    "wordpress-built": {
+      "$comment": "ЗАПУСК ЛОКАЛЬНОЙ СБОРКИ: сначала npm run build, затем node dist/index.js.",
+      "command": "node",
+      "args": ["C:\\Users\\USER\\Desktop\\MCP WP\\dist\\index.js"],
+      "env": {
+        "WORDPRESS_URL": "https://blog.sellerix.ru",
+        "WORDPRESS_USERNAME": "cursor",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
