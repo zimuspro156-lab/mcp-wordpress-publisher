@@ -30,6 +30,12 @@ MCP-сервер на **TypeScript** ([@modelcontextprotocol/sdk](https://github
 | `wp_create_category` | Создать категорию |
 | `wp_list_tags` | Список меток с id |
 | `wp_create_tag` | Создать метку |
+| `wordstat_top` | Wordstat: частотность, топ запросов и ассоциации за 30 дней |
+| `wordstat_dynamics` | Wordstat: динамика спроса по дням / неделям / месяцам |
+| `wordstat_regions` | Wordstat: география спроса и индекс интереса |
+| `wordstat_find_region` | Wordstat: найти ID региона по названию |
+
+Инструменты Wordstat появляются только если заданы `YANDEX_API_KEY` и `YANDEX_FOLDER_ID`. API: [Yandex Cloud Search API → Wordstat](https://aistudio.yandex.ru/ru/docs/search-api/concepts/wordstat).
 
 ---
 
@@ -51,7 +57,10 @@ MCP WP/
 │   ├── config.ts       # Загрузка и валидация переменных окружения (.env)
 │   ├── logger.ts       # Логгер (stderr + опциональный файл, уровни)
 │   ├── wordpress.ts    # Клиент WordPress REST API + логирование запросов
-│   └── tools.ts        # Регистрация MCP-инструментов
+│   ├── tools.ts        # Регистрация MCP-инструментов WordPress
+│   ├── wordstat.ts     # Клиент Yandex Wordstat (Search API v2)
+│   ├── wordstatTools.ts
+│   └── wordstatServer.ts  # Отдельный MCP только с Wordstat
 ├── chatgpt-sse/        # Python FastAPI MCP (SSE + Streamable HTTP) для ChatGPT
 │   ├── mcp_sse_server.py
 │   ├── requirements.txt
@@ -93,6 +102,23 @@ cp .env.example .env
 | `WORDPRESS_APP_PASSWORD` | да | Application Password |
 | `LOG_LEVEL` | нет | `error` \| `warn` \| `info` \| `debug` (по умолчанию `info`) |
 | `LOG_FILE` | нет | Путь к файлу логов; без него логи только в stderr |
+| `YANDEX_API_KEY` | для Wordstat | API-ключ AI Studio / Yandex Cloud (`Authorization: Api-Key`) |
+| `YANDEX_FOLDER_ID` | для Wordstat | ID каталога Yandex Cloud (`folderId` в теле запроса) |
+
+Wordstat работает через [Yandex Cloud Search API v2](https://aistudio.yandex.ru/ru/docs/search-api/concepts/wordstat), не через старый OAuth Директа. Нужны:
+
+1. API-ключ сервисного аккаунта (лучше со scope `yc.search-api.execute`).
+2. Роль `search-api.webSearch.user` или `search-api.executor` на каталоге.
+3. `folderId` каталога — в [консоли Yandex Cloud](https://console.yandex.cloud/) на странице каталога и в URL (`.../folders/b1g...`).
+4. Активный биллинг в облаке (иначе часто приходит `403 Permission denied`).
+
+После заполнения `.env` пересоберите (`npm run build`) и перезапустите MCP wordpress в Cursor.
+
+Отдельный сервер только с Wordstat:
+
+```bash
+npm run dev:wordstat
+```
 
 ---
 
@@ -368,7 +394,7 @@ npm publish
 | HTTP 401 | Неверный логин или Application Password; проверьте `wp_verify_connection` |
 | HTTP 403 | У пользователя нет прав на публикацию; проверьте роль в WordPress |
 | Сетевая ошибка | Недоступен `WORDPRESS_URL` или блокирует firewall/Cloudflare |
-| Клиент не видит сервер | Проверьте абсолютные пути в конфиге и что установлен Node.js >= 18 |
+| HTTP 403 от Wordstat | Нет роли `search-api.webSearch.user` на каталоге, неверный scope ключа или неактивный биллинг |
 
 ---
 

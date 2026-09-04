@@ -6,6 +6,7 @@ import { logger } from "./logger.js";
 import { createMcpServer, SERVER_NAME, SERVER_VERSION } from "./mcpServer.js";
 import type { AppConfig } from "./config.js";
 import type { WordPressClient } from "./wordpress.js";
+import type { WordstatClient } from "./wordstat.js";
 
 /**
  * Запускает MCP-сервер по транспорту Streamable HTTP.
@@ -13,7 +14,11 @@ import type { WordPressClient } from "./wordpress.js";
  * Эндпоинт: POST/GET/DELETE /mcp (это и есть URL для ChatGPT-коннектора).
  * Авторизация: заголовок `Authorization: Bearer <MCP_AUTH_TOKEN>`.
  */
-export async function startHttpServer(config: AppConfig, wp: WordPressClient): Promise<void> {
+export async function startHttpServer(
+  config: AppConfig,
+  wp: WordPressClient,
+  wordstat?: WordstatClient | null,
+): Promise<void> {
   const app = express();
   app.use(express.json({ limit: "4mb" }));
 
@@ -72,7 +77,7 @@ export async function startHttpServer(config: AppConfig, wp: WordPressClient): P
           }
         };
 
-        const server = createMcpServer(wp);
+        const server = createMcpServer(wp, wordstat);
         await server.connect(transport);
       } else {
         logger.warn("HTTP: запрос без валидной сессии и не initialize");

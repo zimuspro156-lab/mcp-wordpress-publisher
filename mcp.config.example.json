@@ -11,7 +11,19 @@
         "WORDPRESS_USERNAME": "cursor",
         "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
         "LOG_LEVEL": "debug",
-        "LOG_FILE": "C:\\Users\\USER\\Desktop\\MCP WP\\logs\\mcp-wordpress.log"
+        "LOG_FILE": "C:\\Users\\USER\\Desktop\\MCP WP\\logs\\mcp-wordpress.log",
+        "YANDEX_API_KEY": "AQVN...",
+        "YANDEX_FOLDER_ID": "b1g..."
+      }
+    },
+
+    "yandex-wordstat": {
+      "$comment": "Отдельный MCP только с Wordstat (без WordPress). Нужны YANDEX_API_KEY и YANDEX_FOLDER_ID.",
+      "command": "npx",
+      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\MCP WP\\src\\wordstatServer.ts"],
+      "env": {
+        "YANDEX_API_KEY": "AQVN...",
+        "YANDEX_FOLDER_ID": "b1g..."
       }
     },
 
@@ -35,7 +47,9 @@
         "WORDPRESS_URL": "https://blog.sellerix.ru",
         "WORDPRESS_USERNAME": "cursor",
         "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
-        "LOG_LEVEL": "info"
+        "LOG_LEVEL": "info",
+        "YANDEX_API_KEY": "AQVN...",
+        "YANDEX_FOLDER_ID": "b1g..."
       }
     }
   }

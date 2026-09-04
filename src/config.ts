@@ -1,5 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config as loadDotenv } from "dotenv";
 import { logger } from "./logger.js";
+import { loadWordstatConfig, type WordstatConfig } from "./wordstat.js";
 
 /**
  * Итоговая конфигурация сервера, собранная из переменных окружения.
@@ -16,6 +19,8 @@ export interface AppConfig {
   httpHost: string;
   /** Bearer-токен для авторизации HTTP-запросов. Если не задан — доступ открыт (небезопасно). */
   authToken?: string;
+  /** Ключ и каталог Yandex Wordstat. Если нет — инструменты Wordstat не регистрируются. */
+  wordstat: WordstatConfig | null;
 }
 
 /**
@@ -26,11 +31,17 @@ export interface AppConfig {
 export function loadConfig(): AppConfig {
   // Загружаем .env для локального запуска. В проде переменные обычно
   // приходят из окружения MCP-клиента и dotenv просто ничего не находит.
-  const result = loadDotenv();
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const fromCwd = loadDotenv();
+  const fromRoot = loadDotenv({ path: path.resolve(here, "../.env") });
   logger.reconfigure();
 
-  if (result.parsed) {
-    logger.debug("Файл .env загружен", { keys: Object.keys(result.parsed) });
+  const parsedKeys = [
+    ...Object.keys(fromCwd.parsed ?? {}),
+    ...Object.keys(fromRoot.parsed ?? {}),
+  ];
+  if (parsedKeys.length > 0) {
+    logger.debug("Файл .env загружен", { keys: [...new Set(parsedKeys)] });
   } else {
     logger.debug(".env не найден — используются переменные окружения процесса");
   }
@@ -59,6 +70,7 @@ export function loadConfig(): AppConfig {
   const httpPort = parsePort(process.env.MCP_HTTP_PORT, 3000);
   const httpHost = process.env.MCP_HTTP_HOST?.trim() || "0.0.0.0";
   const authToken = process.env.MCP_AUTH_TOKEN?.trim() || undefined;
+  const wordstat = loadWordstatConfig();
 
   logger.info("Конфигурация загружена", {
     wordpressUrl,
@@ -67,6 +79,8 @@ export function loadConfig(): AppConfig {
     transport,
     httpPort: transport === "http" ? httpPort : undefined,
     authTokenSet: Boolean(authToken),
+    wordstatFolderId: wordstat?.folderId,
+    wordstatEnabled: Boolean(wordstat),
   });
 
   if (transport === "http" && !authToken) {
@@ -84,6 +98,7 @@ export function loadConfig(): AppConfig {
     httpPort,
     httpHost,
     authToken,
+    wordstat,
   };
 }
 
