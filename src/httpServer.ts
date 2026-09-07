@@ -20,7 +20,7 @@ export async function startHttpServer(
   wordstat?: WordstatClient | null,
 ): Promise<void> {
   const app = express();
-  app.use(express.json({ limit: "4mb" }));
+  app.use(express.json({ limit: "25mb" }));
 
   // Простой health-check без авторизации.
   app.get("/", (_req, res) => {

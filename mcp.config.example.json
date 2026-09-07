@@ -5,13 +5,13 @@
     "wordpress-local-dev": {
       "$comment": "ЛОКАЛЬНЫЙ ЗАПУСК БЕЗ КОМПИЛЯЦИИ: tsx выполняет TypeScript напрямую. Замените путь на абсолютный путь к вашему src/index.ts.",
       "command": "npx",
-      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\MCP WP\\src\\index.ts"],
+      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\src\\index.ts"],
       "env": {
         "WORDPRESS_URL": "https://blog.sellerix.ru",
         "WORDPRESS_USERNAME": "cursor",
         "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
         "LOG_LEVEL": "debug",
-        "LOG_FILE": "C:\\Users\\USER\\Desktop\\MCP WP\\logs\\mcp-wordpress.log",
+        "LOG_FILE": "C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\logs\\mcp-wordpress.log",
         "YANDEX_API_KEY": "AQVN...",
         "YANDEX_FOLDER_ID": "b1g..."
       }
@@ -20,7 +20,7 @@
     "yandex-wordstat": {
       "$comment": "Отдельный MCP только с Wordstat (без WordPress). Нужны YANDEX_API_KEY и YANDEX_FOLDER_ID.",
       "command": "npx",
-      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\MCP WP\\src\\wordstatServer.ts"],
+      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\src\\wordstatServer.ts"],
       "env": {
         "YANDEX_API_KEY": "AQVN...",
         "YANDEX_FOLDER_ID": "b1g..."
@@ -42,7 +42,7 @@
     "wordpress-built": {
       "$comment": "ЗАПУСК ЛОКАЛЬНОЙ СБОРКИ: сначала npm run build, затем node dist/index.js.",
       "command": "node",
-      "args": ["C:\\Users\\USER\\Desktop\\MCP WP\\dist\\index.js"],
+      "args": ["C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\dist\\index.js"],
       "env": {
         "WORDPRESS_URL": "https://blog.sellerix.ru",
         "WORDPRESS_USERNAME": "cursor",

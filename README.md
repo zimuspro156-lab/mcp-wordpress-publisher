@@ -2,7 +2,7 @@
 
 MCP-сервер на **TypeScript** ([@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)) для публикации и управления статьями на сайте WordPress через **WordPress REST API** (`/wp-json/wp/v2`).
 
-Сервер даёт любому MCP-клиенту (Cursor, Claude Desktop и др.) набор инструментов: создать/опубликовать статью, обновить, удалить, получить список, управлять категориями и метками.
+Сервер даёт любому MCP-клиенту (Cursor, Claude Desktop и др.) набор инструментов: создать/опубликовать статью с картинками, подобрать категории и метки с сайта, обновить, удалить, получить список. Картинки этот MCP **не генерирует** — принимает готовые файлы (URL или base64) и загружает их в медиабиблиотеку WordPress.
 
 ---
 
@@ -21,6 +21,7 @@ MCP-сервер на **TypeScript** ([@modelcontextprotocol/sdk](https://github
 | Инструмент | Назначение |
 |-----------|-----------|
 | `wp_verify_connection` | Проверить URL/логин/пароль (`/users/me`) |
+| `wp_upload_media` | Загрузить изображение в медиабиблиотеку (URL или base64) |
 | `wp_create_post` | Создать/опубликовать статью (`draft` по умолчанию) |
 | `wp_update_post` | Обновить статью по id (в т.ч. `draft → publish`) |
 | `wp_get_post` | Получить статью по id |
@@ -36,6 +37,17 @@ MCP-сервер на **TypeScript** ([@modelcontextprotocol/sdk](https://github
 | `wordstat_find_region` | Wordstat: найти ID региона по названию |
 
 Инструменты Wordstat появляются только если заданы `YANDEX_API_KEY` и `YANDEX_FOLDER_ID`. API: [Yandex Cloud Search API → Wordstat](https://aistudio.yandex.ru/ru/docs/search-api/concepts/wordstat).
+
+### Как устроена публикация статьи
+
+Агент в Cursor понимает запросы вроде «напиши статью на тему X и опубликуй»:
+
+1. **Текст.** Пишет HTML без ведущего H1 (заголовок уже рисует тема WordPress).
+2. **Картинки.** Этот MCP их не рисует. Нужен готовый файл: `https://...` или base64 / `data:image/png;base64,...` (от вас или от отдельного image-MCP). Дальше `wp_upload_media` или поле `images` у `wp_create_post`. Первая картинка становится обложкой, остальные вставляются в текст.
+3. **Категории и метки.** Берутся из уже существующих на сайте. Можно передать названия (`"Маркетплейсы"`) или id. Если не указать — сервер сам подберёт ближайшие по теме статьи.
+4. **Wordstat.** Вызывается только если вы просите ключи / семантику («собери ключи в Wordstat и опубликуй»).
+
+У пользователя WordPress должны быть права на публикацию **и** загрузку файлов (роль Автор / Редактор / Администратор).
 
 ---
 
@@ -57,6 +69,8 @@ MCP WP/
 │   ├── config.ts       # Загрузка и валидация переменных окружения (.env)
 │   ├── logger.ts       # Логгер (stderr + опциональный файл, уровни)
 │   ├── wordpress.ts    # Клиент WordPress REST API + логирование запросов
+│   ├── media.ts        # URL/base64 → файл, вставка картинок в HTML
+│   ├── taxonomy.ts     # Подбор категорий и меток с сайта
 │   ├── tools.ts        # Регистрация MCP-инструментов WordPress
 │   ├── wordstat.ts     # Клиент Yandex Wordstat (Search API v2)
 │   ├── wordstatTools.ts
@@ -82,7 +96,99 @@ MCP WP/
 
 ---
 
-## Установка и настройка
+## Установка (с GitHub в Cursor)
+
+Репозиторий: [github.com/zimuspro156-lab/mcp-wordpress-publisher](https://github.com/zimuspro156-lab/mcp-wordpress-publisher)
+
+### 1. Скачать и собрать
+
+```bash
+git clone https://github.com/zimuspro156-lab/mcp-wordpress-publisher.git
+cd mcp-wordpress-publisher
+npm install
+```
+
+`npm install` сам соберёт `dist/` (скрипт `prepare`).
+
+### 2. Пароль приложения WordPress
+
+В админке: **Пользователи → Профиль → Application Passwords** → создать пароль для пользователя, который умеет публиковать записи и загружать медиа.
+
+Скопируйте `.env.example` в `.env` и заполните:
+
+```bash
+cp .env.example .env
+```
+
+Минимум:
+
+```
+WORDPRESS_URL=https://blog.sellerix.ru
+WORDPRESS_USERNAME=cursor
+WORDPRESS_APP_PASSWORD=xxxx xxxx xxxx xxxx xxxx xxxx
+```
+
+Wordstat — по желанию (`YANDEX_API_KEY` + `YANDEX_FOLDER_ID`).
+
+### 3. Подключить в Cursor
+
+**Settings → MCP → Add new MCP server** (или файл `.cursor/mcp.json` / глобальный `mcp.json`).
+
+Подставьте **абсолютный путь** к клонированному репозиторию:
+
+```json
+{
+  "mcpServers": {
+    "wordpress": {
+      "command": "node",
+      "args": ["C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\dist\\index.js"],
+      "env": {
+        "WORDPRESS_URL": "https://blog.sellerix.ru",
+        "WORDPRESS_USERNAME": "cursor",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+Для разработки без предварительной сборки можно запускать TypeScript напрямую:
+
+```json
+{
+  "mcpServers": {
+    "wordpress": {
+      "command": "npx",
+      "args": ["-y", "tsx", "C:\\Users\\USER\\Desktop\\Разработка на Cursor\\MCP WP\\src\\index.ts"],
+      "env": {
+        "WORDPRESS_URL": "https://blog.sellerix.ru",
+        "WORDPRESS_USERNAME": "cursor",
+        "WORDPRESS_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx",
+        "LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
+```
+
+После сохранения перезапустите MCP `wordpress` в Cursor и спросите: «проверь подключение к WordPress».
+
+### 4. Обновление
+
+```bash
+cd mcp-wordpress-publisher
+git pull
+npm install
+```
+
+Затем снова перезапустите сервер в Cursor.
+
+Другие примеры запуска (`npx` после публикации в npm, отдельный Wordstat) — в [`mcp.config.example.json`](./mcp.config.example.json).
+
+---
+
+## Установка и настройка (кратко)
 
 ```bash
 # 1. Установить зависимости
@@ -374,6 +480,8 @@ npm publish
 - [x] Публикация статей на WordPress через REST API (`wp_create_post`, `wp_update_post`)
 - [x] Данные сайта вынесены в env (`WORDPRESS_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD`)
 - [x] Полный набор инструментов: создание/обновление/чтение/список/удаление статей, категории, метки
+- [x] Загрузка изображений в медиабиблиотеку (URL и base64) и вставка в статью
+- [x] Автоподбор существующих категорий и меток по теме статьи
 - [x] Логирование везде (конфиг, HTTP-запросы, инструменты, ошибки) с уровнями и опциональным файлом
 - [x] README с описанием проекта и инструкциями
 - [x] Конфигурация для запуска через `npx` (`bin` в package.json + пример в `mcp.config.example.json`)
@@ -392,7 +500,8 @@ npm publish
 |---------|-------------------|
 | `Отсутствуют обязательные переменные окружения` | Не заполнен `.env` или `env` в конфиге клиента |
 | HTTP 401 | Неверный логин или Application Password; проверьте `wp_verify_connection` |
-| HTTP 403 | У пользователя нет прав на публикацию; проверьте роль в WordPress |
+| HTTP 403 | У пользователя нет прав на публикацию или загрузку медиа; проверьте роль в WordPress |
+| Ошибка загрузки картинки | Нужен URL или base64; пользователь должен уметь загружать файлы; лимит 15 МБ |
 | Сетевая ошибка | Недоступен `WORDPRESS_URL` или блокирует firewall/Cloudflare |
 | HTTP 403 от Wordstat | Нет роли `search-api.webSearch.user` на каталоге, неверный scope ключа или неактивный биллинг |
 

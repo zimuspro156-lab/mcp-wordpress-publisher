@@ -73,7 +73,7 @@ export function registerWordstatTools(server: McpServer, wordstat: WordstatClien
       title: "Wordstat: топ запросов",
       description:
         "Яндекс Wordstat: частотность фразы за последние 30 дней, топ запросов, которые её содержат, " +
-        "и семантически близкие ассоциации. Используйте перед выбором H1/ключа статьи.",
+        "и семантически близкие ассоциации. Вызывайте, если пользователь просит ключи / семантику для статьи.",
       inputSchema: {
         phrase: phraseSchema,
         numPhrases: z
